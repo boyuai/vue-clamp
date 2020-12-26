@@ -20,7 +20,7 @@
   <ul>
     <li>{{ zh ? '支持限制最大行数和最大高度，多行文字无需指定行高。' : 'Clamps contents with max lines and max height. No need to specify line height for text.' }}</li>
     <li>{{ zh ? '支持在布局变化时自动更新。' : 'Automatically updates upon layout change.' }}</li>
-    <li>{{ zh ? '支持展开/收起被截断部分内容。' : 'The clamped text can be expanded/collapsed.' }}</li>
+    <li>{{ zh ? '支持展开/收起被截断部分内容。' : 'The clamped contents can be expanded/collapsed.' }}</li>
     <li>{{ zh ? '支持自定义截断内容的前后区域，并且进行响应式更新。' : 'Customizable and responsive content before/after clamped contents.' }}</li>
   </ul>
   <h2 id="demo">
@@ -82,7 +82,6 @@
         width: `${width0}px`
       }"
     >
-      <!-- {{ zh ? textZh : text }} -->
       <button v-for="key in Array.from(Array(60).keys())" :key="key"><span>{{key}}</span></button>
       <template #after="{ toggle, expanded, clamped }">
         <button
@@ -433,7 +432,13 @@ export default {
         <p>
           <code>max-lines: number</code>
         </p>
-        <p>{{ zh ? '可以显示的最大行数' : 'The max number of lines that can be displayed.' }}</p>
+        <p>{{ zh ? '可以显示的最大行数。' : 'The max number of lines that can be displayed.' }}</p>
+      </li>
+      <li>
+        <p>
+          <code>line-height: number</code>
+        </p>
+        <p>{{ zh ? '“非文本”内容需要手动指定行高以便截断。' : 'Non-text contents must provide their line-height for clamping.' }}</p>
       </li>
       <li>
         <p>
@@ -470,7 +475,7 @@ export default {
             :data-tooltip="zh ? '支持 .sync 修饰符' : 'Supports .sync modifier'"
           >.sync</span>
         </p>
-        <p>{{ zh ? '是否展开显式被截断的文本。' : 'Whether the clamped area is expanded.' }}</p>
+        <p>{{ zh ? '是否展开显式被截断的内容。' : 'Whether the clamped area is expanded.' }}</p>
         <p>
           {{ defaultText }}
           <code>false</code>
@@ -485,7 +490,7 @@ export default {
         <p>
           <code>default</code>
         </p>
-        <p>{{ zh ? '需要截断的文本。只能包含纯文本内容。' : 'The text to clamp. Can only contain pure text.' }}</p>
+        <p>{{ zh ? '需要截断的内容。内容类型必须一致，比如纯文本或者多个标签。' : 'The contents to clamp. Only supports pure text or same type html node.' }}</p>
       </li>
       <li>
         <p>
@@ -498,26 +503,26 @@ export default {
         <section class="secondary">
           <p>
             <code>expand: function(): void</code>
-            - {{ zh ? '展开被截断的文本。' : 'Expand the clamped text.' }}
+            - {{ zh ? '展开被截断的内容。' : 'Expand the clamped contents.' }}
           </p>
           <p>
             <code>collapse: function(): void</code>
-            - {{ zh ? '收起展开后的文本。' : 'Collapse the expanded text.' }}
+            - {{ zh ? '收起展开后的内容。' : 'Collapse the expanded contents.' }}
           </p>
           <p>
             <code>toggle: function(): void</code>
-            - {{ zh ? '切换被截断文本的展开状态。' : 'Toggle the expand state of clamped text.' }}
+            - {{ zh ? '切换被截断内容的展开状态。' : 'Toggle the expand state of clamped contents.' }}
           </p>
           <p>
             <code>clamped: Boolean</code>
-            - {{ zh ? '内容是否处于截断状态。' : 'Whether text content is being clamped.' }}
+            - {{ zh ? '内容是否处于截断状态。' : 'Whether contents are clamped.' }}
           </p>
           <p>
             <code>expanded: Boolean</code>
-            - {{ zh ? '内容是否处于展开状态。' : 'Whether text content is being expanded.' }}
+            - {{ zh ? '内容是否处于展开状态。' : 'Whether contents are expanded.' }}
           </p>
         </section>
-        <p>{{ zh ? '在被截断的文本前显式的内容，可以包含任意类型内容。' : 'Content displayed before the clamped text. Can contain anything.' }}</p>
+        <p>{{ zh ? '在被截断的内容前显式的内容，可以是任意类型的内容。' : 'Content displayed before the clamped contents. Can contain anything.' }}</p>
       </li>
       <li>
         <p>
@@ -531,7 +536,7 @@ export default {
           Slot scope: Same as
           <code>before</code>.
         </p>
-        <p>{{ zh ? '在被截断的文本后显式的内容，可以包含任意类型内容。' : 'Content displayed after the clamped text. Can contain anything.' }}</p>
+        <p>{{ zh ? '在被截断的内容后显式的内容，可以是任意类型的内容。' : 'Content displayed after the clamped contents. Can contain anything.' }}</p>
       </li>
     </ul>
   </section>
@@ -552,12 +557,14 @@ export default {
   </section>
   <footer>
     <p v-if="zh">
-      由
-      <a href="https://github.com/Justineo">@Justineo</a> 创作。
+      作者：
+      <a href="https://github.com/Justineo">@Justineo</a>{{' '}}
+      <a href="https://github.com/helsonxiao">@helsonxiao</a>
     </p>
     <p v-else>
-      Made by
-      <a href="https://github.com/Justineo">@Justineo</a>.
+      Authors:{{' '}}
+      <a href="https://github.com/Justineo">@Justineo</a>{{' '}}
+      <a href="https://github.com/helsonxiao">@helsonxiao</a>
     </p>
     <p>
       <small v-if="zh">

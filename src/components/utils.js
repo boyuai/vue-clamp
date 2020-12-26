@@ -10,7 +10,7 @@ export function createInstance ({
   nonTextNodes,
   after
 }) {
-  debugger
+  // debugger
   const content = text || nonTextNodes
   const InstanceClass = Vue.extend({
     render: (createElement) => {
@@ -51,7 +51,7 @@ export function createInstance ({
 }
 
 function getLines ({ node, lineHeight }) {
-  debugger
+  // debugger
   let lines
   if (lineHeight) {
     lines = Math.ceil(node.getClientRects()[0].height / lineHeight)
@@ -77,7 +77,7 @@ function getLines ({ node, lineHeight }) {
 }
 
 function isOverflow ({ node, maxLines, maxHeight, lineHeight }) {
-  debugger
+  // debugger
   if (!maxLines && !maxHeight) {
     // console.log('[isOverflow] !maxLines && !maxHeight: ', false)
     return false
@@ -126,7 +126,7 @@ function measureText ({
   endLoc = fullText.length,
   lastSuccessLoc = 0
 }) {
-  debugger
+  // debugger
   const midLoc = Math.floor((startLoc + endLoc) / 2)
   const currentText = fullText.slice(0, midLoc)
   textNode.textContent = currentText
@@ -183,10 +183,85 @@ function measureText ({
   })
 }
 
-export function measureNonTextNodes () {
-  return {
-    offset: null
+export function unmountNodesHolder (holder) {
+  ellipsisContainer.removeChild(holder)
+}
+
+export function measureNonTextNodes ({
+  nodes,
+  nodesHolder,
+  beforeNode,
+  afterNode,
+  maxLines,
+  maxHeight,
+  lineHeight,
+  startLoc = 0,
+  endLoc = nodes.length,
+  lastSuccessLoc = 0
+}) {
+  // debugger
+  const midLoc = Math.floor((startLoc + endLoc) / 2)
+  const currentNodes = nodes.slice(0, midLoc)
+  unmountNodesHolder(nodesHolder)
+  const [newHolder, appendChildNode] = useHolder({ tag: 'div', beforeNode, afterNode })
+  currentNodes.forEach(appendChildNode)
+  ellipsisContainer.appendChild(newHolder)
+
+  if (startLoc >= endLoc - 1) {
+    for (let step = endLoc; step >= startLoc; step -= 1) {
+      const currentStepNode = nodes[step - 1]
+      appendChildNode(currentStepNode)
+
+      const inRange = !isOverflow({
+        node: newHolder,
+        maxLines,
+        maxHeight,
+        lineHeight
+      })
+      if (inRange || !currentStepNode) {
+        return step === nodes.length
+          ? {
+            offset: nodes.length
+          }
+          : {
+            offset: step - 1
+          }
+      }
+    }
   }
+
+  const inRange = !isOverflow({
+    node: newHolder,
+    maxLines,
+    maxHeight,
+    lineHeight
+  })
+  if (inRange) {
+    return measureNonTextNodes({
+      nodes,
+      nodesHolder: newHolder,
+      beforeNode,
+      afterNode,
+      maxLines,
+      maxHeight,
+      lineHeight,
+      startLoc: midLoc,
+      endLoc,
+      lastSuccessLoc: midLoc
+    })
+  }
+  return measureNonTextNodes({
+    nodes,
+    nodesHolder: newHolder,
+    beforeNode,
+    afterNode,
+    maxLines,
+    maxHeight,
+    lineHeight,
+    startLoc,
+    endLoc: midLoc,
+    lastSuccessLoc
+  })
 }
 
 /**
@@ -199,27 +274,30 @@ function useHolder ({
   afterNode
 }) {
   const holder = document.createElement(tag)
-  let appendChildNode
+  let appendHolderChild = function (node) {
+    holder.appendChild(node)
+  }
+
   if (beforeNode) {
     holder.appendChild(beforeNode)
   }
   if (ellipsis) {
     const ellipsisTextNode = document.createTextNode(ellipsis)
     holder.appendChild(ellipsisTextNode)
-    appendChildNode = function (node) {
+    appendHolderChild = function (node) {
       holder.insertBefore(node, ellipsisTextNode)
     }
   }
   if (afterNode) {
     holder.appendChild(afterNode)
-    if (!appendChildNode) {
-      appendChildNode = function (node) {
+    if (!ellipsis) {
+      appendHolderChild = function (node) {
         holder.insertBefore(node, afterNode)
       }
     }
   }
 
-  return [holder, appendChildNode]
+  return [holder, appendHolderChild]
 }
 
 let ellipsisContainer
@@ -247,7 +325,7 @@ export function measure ({
   lineHeight,
   originEle
 }) {
-  debugger
+  // debugger
   const WONTFIX = {
     offset: text ? text.length : nonTextNodes.length
   }
@@ -328,7 +406,7 @@ export function measure ({
   ellipsisContainer.innerHTML = ''
 
   // ========================= Find match ellipsis content =========================
-  const [holder, appendChildNode] = useHolder({
+  const [holder, appendHolderChild] = useHolder({
     tag: text ? 'span' : 'div',
     ellipsis: text ? ellipsis : undefined,
     beforeNode,
@@ -340,7 +418,7 @@ export function measure ({
   if (text && childNodes[0].nodeType === TEXT_NODE) {
     const fullText = childNodes[0].textContent || ''
     const textNode = document.createTextNode(fullText)
-    appendChildNode(textNode)
+    appendHolderChild(textNode)
     const { offset: newOffset } = measureText({
       fullText,
       textNode,
@@ -359,7 +437,15 @@ export function measure ({
         offset: null
       }
     }
-    const { offset: newOffset } = measureNonTextNodes()
+    const { offset: newOffset } = measureNonTextNodes({
+      nodes: elementNodes,
+      nodesHolder: holder,
+      beforeNode,
+      afterNode,
+      maxLines,
+      maxHeight,
+      lineHeight
+    })
     if (typeof newOffset === 'number') {
       offset = newOffset
       console.log('nonTextNodes newOffset: ', newOffset)
