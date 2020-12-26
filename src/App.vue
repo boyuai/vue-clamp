@@ -5,7 +5,7 @@
     <button class="btn btn-sm" :class="{ active: !zh }" @click="zh = false">English</button>
     <button class="btn btn-sm" :class="{ active: zh }" @click="zh = true">中文</button>
   </div>
-  <p>{{ zh ? '轻松实现多行文本截断。' : 'Clamping multiline text with ease.' }}</p>
+  <p>{{ zh ? '轻松实现多行内容的截断。' : 'Clamping multiline contents with ease.' }}</p>
   <p>
     <a
       class="tooltip"
@@ -13,16 +13,16 @@
       :data-tooltip="zh ? '前往 GitHub 仓库' : 'Visit GitHub repo'"
     >GitHub →</a>
   </p>
-  <!-- <h2 id="features">
+  <h2 id="features">
     <a href="#features">#</a>
     {{ zh ? '功能' : 'Features' }}
   </h2>
   <ul>
-    <li>{{ zh ? '可以选择限制行数与/或最大高度，无需指定行高。' : 'Clamps text with max lines and/or max height. No need to specify line height.' }}</li>
+    <li>{{ zh ? '支持限制最大行数和最大高度，多行文字无需指定行高。' : 'Clamps contents with max lines and max height. No need to specify line height for text.' }}</li>
     <li>{{ zh ? '支持在布局变化时自动更新。' : 'Automatically updates upon layout change.' }}</li>
     <li>{{ zh ? '支持展开/收起被截断部分内容。' : 'The clamped text can be expanded/collapsed.' }}</li>
-    <li>{{ zh ? '支持自定义截断文本前后内容，并且进行响应式更新。' : 'Customizable and responsive content before/after clamped text.' }}</li>
-  </ul> -->
+    <li>{{ zh ? '支持自定义截断内容的前后区域，并且进行响应式更新。' : 'Customizable and responsive content before/after clamped contents.' }}</li>
+  </ul>
   <h2 id="demo">
     <a href="#demo">#</a> Demo
   </h2>
@@ -82,8 +82,8 @@
         width: `${width0}px`
       }"
     >
-      {{ zh ? textZh : text }}
-      <!-- <button v-for="key in Array.from(Array(60).keys())" :key="key"><span>{{key}}</span></button> -->
+      <!-- {{ zh ? textZh : text }} -->
+      <button v-for="key in Array.from(Array(60).keys())" :key="key"><span>{{key}}</span></button>
       <template #after="{ toggle, expanded, clamped }">
         <button
           v-if="expanded || clamped"
@@ -93,7 +93,7 @@
       </template>
     </v-clamp>
   </section>
-  <!-- <div class="divider text-center" data-content="↓ max-lines & slot `after`"/>
+  <div class="divider text-center" data-content="↓ max-lines & slot `after`"/>
   <section class="case">
     <div class="form-horizontal">
       <div class="form-group">
@@ -569,7 +569,7 @@ export default {
         <a href="https://picturepan2.github.io/spectre/">Spectre.css</a>.
       </small>
     </p>
-  </footer> -->
+  </footer>
 </article>
 </template>
 
