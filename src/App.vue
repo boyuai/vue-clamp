@@ -276,7 +276,7 @@
     {{ zh ? '使用方法' : 'Usage' }}
   </h2>
   <div class="divider text-center" :data-content="zh ? '↓ 安装' : '↓ Installation'"/>
-  <pre class="code shell" data-lang="Shell"><code>$ npm i --save vue-clamp</code></pre>
+  <pre class="code shell" data-lang="Shell"><code>$ npm i --save @boyuai/vue-clamp</code></pre>
   <div class="divider text-center" :data-content="zh ? '↓ 配置' : '↓ Configuration'"/>
   <p v-if="zh">
     对于基于 webpack 的项目，
