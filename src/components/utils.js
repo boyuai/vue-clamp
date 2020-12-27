@@ -4,6 +4,15 @@ const ELEMENT_NODE = 1
 const TEXT_NODE = 3
 const COMMENT_NODE = 8
 
+let ellipsisContainer
+let instanceContainer
+
+export function unmountInstance (inst) {
+  inst.$destroy()
+  ellipsisContainer.removeChild(inst.$el)
+  instanceContainer = null
+}
+
 export function createInstance ({
   before,
   text,
@@ -16,12 +25,8 @@ export function createInstance ({
     render: (createElement) => {
       const contents = [
         createElement(
-          text ? 'span' : 'div',
-          {
-            style: {
-              display: 'inline'
-            }
-          },
+          'span',
+          {},
           content
         )
       ]
@@ -35,9 +40,6 @@ export function createInstance ({
       return createElement(
         text ? 'span' : 'div',
         {
-          style: {
-            boxShadow: 'transparent 0 0'
-          },
           domProps: {
             id: 'contents'
           }
@@ -131,18 +133,21 @@ function measureText ({
   const currentText = fullText.slice(0, midLoc)
   textNode.textContent = currentText
 
+  const inRange = () => {
+    return !isOverflow({
+      node: textHolder,
+      maxLines,
+      maxHeight
+    })
+  }
+
   if (startLoc >= endLoc - 1) {
     // Loop when step is small
     for (let step = endLoc; step >= startLoc; step -= 1) {
       const currentStepText = fullText.slice(0, step)
       textNode.textContent = currentStepText
 
-      const inRange = !isOverflow({
-        node: textHolder,
-        maxLines,
-        maxHeight
-      })
-      if (inRange || !currentStepText) {
+      if (inRange() || !currentStepText) {
         return step === fullText.length
           ? {
             offset: fullText.length
@@ -154,12 +159,7 @@ function measureText ({
     }
   }
 
-  const inRange = !isOverflow({
-    node: textHolder,
-    maxLines,
-    maxHeight
-  })
-  if (inRange) {
+  if (inRange()) {
     return measureText({
       textNode,
       fullText,
@@ -183,10 +183,6 @@ function measureText ({
   })
 }
 
-export function unmountNodesHolder (holder) {
-  ellipsisContainer.removeChild(holder)
-}
-
 export function measureNonTextNodes ({
   nodes,
   nodesHolder,
@@ -202,41 +198,38 @@ export function measureNonTextNodes ({
   // debugger
   const midLoc = Math.floor((startLoc + endLoc) / 2)
   const currentNodes = nodes.slice(0, midLoc)
-  unmountNodesHolder(nodesHolder)
+  unmountHolder(nodesHolder)
   const [newHolder, appendChildNode] = useHolder({ tag: 'div', beforeNode, afterNode })
   currentNodes.forEach(appendChildNode)
   ellipsisContainer.appendChild(newHolder)
+
+  const inRange = () => {
+    return !isOverflow({
+      node: newHolder,
+      maxLines,
+      maxHeight,
+      lineHeight
+    })
+  }
 
   if (startLoc >= endLoc - 1) {
     for (let step = endLoc; step >= startLoc; step -= 1) {
       const currentStepNode = nodes[step - 1]
       appendChildNode(currentStepNode)
 
-      const inRange = !isOverflow({
-        node: newHolder,
-        maxLines,
-        maxHeight,
-        lineHeight
-      })
-      if (inRange || !currentStepNode) {
+      if (inRange() || !currentStepNode) {
         return step === nodes.length
           ? {
             offset: nodes.length
           }
           : {
-            offset: step - 1
+            offset: step
           }
       }
     }
   }
 
-  const inRange = !isOverflow({
-    node: newHolder,
-    maxLines,
-    maxHeight,
-    lineHeight
-  })
-  if (inRange) {
+  if (inRange()) {
     return measureNonTextNodes({
       nodes,
       nodesHolder: newHolder,
@@ -300,13 +293,8 @@ function useHolder ({
   return [holder, appendHolderChild]
 }
 
-let ellipsisContainer
-let instanceContainer
-
-export function unmount (inst) {
-  inst.$destroy()
-  ellipsisContainer.removeChild(inst.$el)
-  instanceContainer = null
+export function unmountHolder (holder) {
+  ellipsisContainer.removeChild(holder)
 }
 
 /**
@@ -373,7 +361,7 @@ export function measure ({
   })
   // Skip ellipsis if already match
   if (inRange) {
-    unmount(inst)
+    unmountInstance(inst)
     document.body.removeChild(ellipsisContainer)
     return WONTFIX
   }
@@ -402,7 +390,7 @@ export function measure ({
   // console.log('beforeNode: ', beforeNode)
   // console.log('childNodes: ', childNodes)
   // console.log('afterNode: ', afterNode)
-  unmount(inst)
+  unmountInstance(inst)
   ellipsisContainer.innerHTML = ''
 
   // ========================= Find match ellipsis content =========================
@@ -428,7 +416,7 @@ export function measure ({
     })
     if (typeof newOffset === 'number') {
       offset = newOffset
-      console.log('text newOffset: ', newOffset)
+      // console.log('text newOffset: ', newOffset)
     }
   } else if (nonTextNodes.length) {
     const elementNodes = childNodes.filter(element => element.nodeType === ELEMENT_NODE)
@@ -448,7 +436,7 @@ export function measure ({
     })
     if (typeof newOffset === 'number') {
       offset = newOffset
-      console.log('nonTextNodes newOffset: ', newOffset)
+      // console.log('nonTextNodes newOffset: ', newOffset)
     }
   }
 

@@ -26,7 +26,7 @@
   <h2 id="demo">
     <a href="#demo">#</a> Demo
   </h2>
-  <div class="divider text-center" data-content="↓ max-lines & slot `after`"/>
+  <div class="divider text-center" data-content="↓ max-lines(with line-height) & slot `after`"/>
   <section class="case">
     <div class="form-horizontal">
       <div class="form-group">
@@ -52,37 +52,25 @@
           <input id="width0" v-model="width0" class="slider" type="range" min="240" max="600">
         </div>
       </div>
-      <div v-if="!zh" class="form-group">
-        <div class="col-5 col-sm-12">
-          <label class="form-checkbox">
-            <input v-model="hyphens1" type="checkbox">
-            <i class="form-icon"/>
-            CSS Hyphens
-          </label>
-        </div>
-        <div class="col-5 col-sm-12">
-          <label class="form-checkbox">
-            <input v-model="rtl1" type="checkbox">
-            <i class="form-icon"/>
-            RTL
-          </label>
-        </div>
-      </div>
     </div>
     <v-clamp
       :class="{
         demo: true,
-        hyphens: hyphens1,
-        rtl: rtl1
       }"
       :max-lines="lines0"
-      :line-height="38"
+      :line-height="40"
       autoresize
       :style="{
-        width: `${width0}px`
+        width: `${width0}px`,
+        lineHeight: '40px'
       }"
     >
-      <button v-for="key in Array.from(Array(60).keys())" :key="key"><span>{{key}}</span></button>
+      <span
+        v-for="key in Array.from(Array(40).keys())" :key="key"
+        class="featured label label-rounded label-primary"
+      >
+        {{ `tag-${key * 87}` }}
+      </span>
       <template #after="{ toggle, expanded, clamped }">
         <button
           v-if="expanded || clamped"

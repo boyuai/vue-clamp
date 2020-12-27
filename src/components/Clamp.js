@@ -2,6 +2,9 @@ import Vue from 'vue'
 import { addListener, removeListener } from 'resize-detector'
 import { measure } from './utils'
 
+const raf = require('raf')
+let rafId
+
 export default Vue.extend({
   name: 'vue-clamp',
   props: {
@@ -14,7 +17,7 @@ export default Vue.extend({
       default: false
     },
     maxLines: Number,
-    lineHeight: Number, // 非文本内容需要指定行高
+    lineHeight: Number,
     maxHeight: [String, Number],
     ellipsis: {
       type: String,
@@ -72,10 +75,10 @@ export default Vue.extend({
     },
     localExpanded (val) {
       if (val) {
-        console.log('[watch localExpanded] 恢复默认 offset')
+        // console.log('[watch localExpanded] 恢复默认 offset')
         this.offset = this.contentLength
       } else {
-        console.log('[watch localExpanded] 重新计算 offset')
+        // console.log('[watch localExpanded] 重新计算 offset')
         this.update()
       }
       if (this.expanded !== val) {
@@ -85,49 +88,49 @@ export default Vue.extend({
     isClamped: {
       handler (val) {
         this.$nextTick(() => this.$emit('clampchange', val))
-        console.log('[watch isClamped]: 截断状态变化触发 before & after 更新')
+        // console.log('[watch isClamped]: 截断状态变化触发 before & after 更新')
         this.updateBeforeAndAfter()
       },
       immediate: true
     },
     before (val, oldVal) {
       if (val !== oldVal) {
-        console.log('[watch before]: before 变更触发更新')
+        // console.log('[watch before]: before 变更触发更新')
         this.update()
       }
     },
     after (val, oldVal) {
       if (val !== oldVal) {
-        console.log('[watch after]: after 变更触发更新')
+        // console.log('[watch after]: after 变更触发更新')
         this.update()
       }
     },
     text (val, oldVal) {
       if (val !== oldVal) {
-        console.log('[watch text]: text 变更触发更新')
+        // console.log('[watch text]: text 变更触发更新')
         this.localExpanded = false
         this.update()
       }
     },
     nonTextNodes (val, oldVal) {
       if (val.length !== oldVal.length) {
-        console.log('[watch nonTextNodes]: nonTextNodes 变更触发更新')
+        // console.log('[watch nonTextNodes]: nonTextNodes 变更触发更新')
         this.localExpanded = false
         this.update()
       }
     }
   },
   mounted () {
-    console.log('[mounted] start init')
+    // console.log('[mounted] start init')
     this.init()
 
     this.$watch((vm) => [vm.tag, vm.autoresize].join(), () => {
-      console.log('[mounted] watch start init')
+      // console.log('[mounted] watch start init')
       this.init()
     })
   },
   beforeUpdate () {
-    console.log('[beforeUpdate] start updateBeforeAndAfter')
+    // console.log('[beforeUpdate] start updateBeforeAndAfter')
     this.updateBeforeAndAfter()
     this.text = this.getText()
     this.nonTextNodes = this.getNonTextNodes()
@@ -142,51 +145,56 @@ export default Vue.extend({
         return
       }
 
-      console.log('[mounted] start updateBeforeAndAfter')
+      // console.log('[mounted] start updateBeforeAndAfter')
       this.updateBeforeAndAfter()
       this.text = this.getText()
       this.nonTextNodes = this.getNonTextNodes()
       this.localExpanded = !!this.expanded
 
       this.offset = this.text ? this.text.length : this.nonTextNodes.length
-      console.log('[init] this.offset: ', this.offset)
+      // console.log('[init] this.offset: ', this.offset)
 
       this.cleanUp()
-      const _update = () => {
-        console.log('[init] 开始重排更新')
-        this.update()
-      }
       if (this.autoresize) {
-        addListener(this.$el, _update)
+        addListener(this.$el, this.resizeOnNextFrame)
         this.unregisterResizeCallback = () => {
-          removeListener(this.$el, _update)
+          removeListener(this.$el, this.resizeOnNextFrame)
         }
       }
 
       this.$watch(
         (vm) => [vm.maxLines, vm.lineHeight, vm.maxHeight, vm.ellipsis].join(),
         () => {
-          console.log('[init] watch start update')
+          // console.log('[init] watch start update')
           this.update()
         }
       )
 
-      console.log('[init] start update')
+      // console.log('[init] start update')
       this.update()
     },
     update () {
       if (this.localExpanded) return
+
+      const { before, text, nonTextNodes, after, ellipsis, maxLines, lineHeight } = this
       const { offset } = measure({
-        before: this.before,
-        text: this.text,
-        nonTextNodes: this.nonTextNodes,
-        after: this.after,
-        ellipsis: this.ellipsis,
-        maxLines: this.maxLines,
-        lineHeight: this.text ? undefined : this.lineHeight,
+        before,
+        text,
+        nonTextNodes,
+        after,
+        ellipsis,
+        maxLines,
+        lineHeight: text ? undefined : lineHeight,
         originEle: this.$refs.container
       })
       this.offset = offset
+    },
+    resizeOnNextFrame () {
+      // console.log('[resizeOnNextFrame] 开始重排')
+      raf.cancel(rafId)
+      rafId = raf(() => {
+        this.update()
+      })
     },
     expand () {
       this.localExpanded = true
@@ -198,7 +206,6 @@ export default Vue.extend({
       this.localExpanded = !this.localExpanded
     },
     getText () {
-      // Look for the first non-empty text node
       const [content] = (this.$slots.default || []).filter(
         (node) => !node.tag && !node.isComment
       )
@@ -211,12 +218,15 @@ export default Vue.extend({
       return nodes
     },
     cleanUp () {
+      if (rafId) {
+        raf.cancel(rafId)
+      }
       if (this.unregisterResizeCallback) {
         this.unregisterResizeCallback()
       }
     },
     /**
-     * slot 不是响应式的，需要在某些情况下主动更新
+     * Slots are not responsive, we have to update manually.
      */
     updateBeforeAndAfter () {
       const { expand, collapse, toggle } = this
@@ -234,8 +244,8 @@ export default Vue.extend({
       this.after = this.$scopedSlots.after
         ? this.$scopedSlots.after(scope)
         : this.$slots.after
-      console.log('[updateBeforeAndAfter] before: ', this.before)
-      console.log('[updateBeforeAndAfter] after: ', this.after)
+      // console.log('[updateBeforeAndAfter] before: ', this.before)
+      // console.log('[updateBeforeAndAfter] after: ', this.after)
     }
   },
   render (h) {
@@ -243,16 +253,12 @@ export default Vue.extend({
     const realContent = this.text ? this.realText : this.realNonTextNodes
     const contents = [
       h(
-        this.text ? 'span' : 'div',
+        'span',
         this.$isServer
           ? {}
           : {
-            ref: this.text ? 'text' : 'nonTextNodes',
             attrs: {
               'aria-label': this.text ? this.text.trim() : ''
-            },
-            style: {
-              display: 'inline'
             }
           },
         this.$isServer ? content : realContent
@@ -267,7 +273,7 @@ export default Vue.extend({
 
     const lines = [
       h(
-        this.text ? 'span' : 'div',
+        'span',
         {
           style: {
             boxShadow: 'transparent 0 0'
