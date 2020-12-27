@@ -1,6 +1,11 @@
+import Vue from 'vue'
 import { addListener, removeListener } from 'resize-detector'
+import { measure } from './utils'
 
-export default {
+const raf = require('raf')
+let rafId
+
+export default Vue.extend({
   name: 'vue-clamp',
   props: {
     tag: {
@@ -12,6 +17,7 @@ export default {
       default: false
     },
     maxLines: Number,
+    lineHeight: Number,
     maxHeight: [String, Number],
     ellipsis: {
       type: String,
@@ -21,8 +27,11 @@ export default {
   },
   data () {
     return {
-      offset: null,
+      offset: 0,
       text: this.getText(),
+      nonTextNodes: this.getNonTextNodes(),
+      before: null,
+      after: null,
       localExpanded: !!this.expanded
     }
   },
@@ -30,14 +39,20 @@ export default {
     clampedText () {
       return this.text.slice(0, this.offset) + this.ellipsis
     },
+    clampedNonTextNodes () {
+      return this.nonTextNodes.slice(0, this.offset)
+    },
     isClamped () {
-      if (!this.text) {
+      if (!this.text && this.nonTextNodes.length === 0) {
         return false
       }
-      return this.offset !== this.text.length
+      return this.offset !== this.contentLength
     },
     realText () {
       return this.isClamped ? this.clampedText : this.text
+    },
+    realNonTextNodes () {
+      return this.isClamped ? this.clampedNonTextNodes : this.nonTextNodes
     },
     realMaxHeight () {
       if (this.localExpanded) {
@@ -48,6 +63,10 @@ export default {
         return null
       }
       return typeof maxHeight === 'number' ? `${maxHeight}px` : maxHeight
+    },
+    contentLength () {
+      const content = this.text ? this.text : this.nonTextNodes
+      return content.length
     }
   },
   watch: {
@@ -56,8 +75,10 @@ export default {
     },
     localExpanded (val) {
       if (val) {
-        this.clampAt(this.text.length)
+        // console.log('[watch localExpanded] 恢复默认 offset')
+        this.offset = this.contentLength
       } else {
+        // console.log('[watch localExpanded] 重新计算 offset')
         this.update()
       }
       if (this.expanded !== val) {
@@ -67,22 +88,52 @@ export default {
     isClamped: {
       handler (val) {
         this.$nextTick(() => this.$emit('clampchange', val))
+        // console.log('[watch isClamped]: 截断状态变化触发 before & after 更新')
+        this.updateBeforeAndAfter()
       },
       immediate: true
+    },
+    before (val, oldVal) {
+      if (val !== oldVal) {
+        // console.log('[watch before]: before 变更触发更新')
+        this.update()
+      }
+    },
+    after (val, oldVal) {
+      if (val !== oldVal) {
+        // console.log('[watch after]: after 变更触发更新')
+        this.update()
+      }
+    },
+    text (val, oldVal) {
+      if (val !== oldVal) {
+        // console.log('[watch text]: text 变更触发更新')
+        this.localExpanded = false
+        this.update()
+      }
+    },
+    nonTextNodes (val, oldVal) {
+      if (val.length !== oldVal.length) {
+        // console.log('[watch nonTextNodes]: nonTextNodes 变更触发更新')
+        this.localExpanded = false
+        this.update()
+      }
     }
   },
   mounted () {
+    // console.log('[mounted] start init')
     this.init()
 
-    this.$watch(
-      (vm) => [vm.maxLines, vm.maxHeight, vm.ellipsis, vm.isClamped].join(),
-      this.update
-    )
-    this.$watch((vm) => [vm.tag, vm.text, vm.autoresize].join(), this.init)
+    this.$watch((vm) => [vm.tag, vm.autoresize].join(), () => {
+      // console.log('[mounted] watch start init')
+      this.init()
+    })
   },
-  updated () {
+  beforeUpdate () {
+    // console.log('[beforeUpdate] start updateBeforeAndAfter')
+    this.updateBeforeAndAfter()
     this.text = this.getText()
-    this.applyChange()
+    this.nonTextNodes = this.getNonTextNodes()
   },
   beforeDestroy () {
     this.cleanUp()
@@ -94,26 +145,56 @@ export default {
         return
       }
 
-      this.offset = this.text.length
+      // console.log('[mounted] start updateBeforeAndAfter')
+      this.updateBeforeAndAfter()
+      this.text = this.getText()
+      this.nonTextNodes = this.getNonTextNodes()
+      this.localExpanded = !!this.expanded
+
+      this.offset = this.text ? this.text.length : this.nonTextNodes.length
+      // console.log('[init] this.offset: ', this.offset)
 
       this.cleanUp()
-
       if (this.autoresize) {
-        addListener(this.$el, this.update)
+        addListener(this.$el, this.resizeOnNextFrame)
         this.unregisterResizeCallback = () => {
-          removeListener(this.$el, this.update)
+          removeListener(this.$el, this.resizeOnNextFrame)
         }
       }
+
+      this.$watch(
+        (vm) => [vm.maxLines, vm.lineHeight, vm.maxHeight, vm.ellipsis].join(),
+        () => {
+          // console.log('[init] watch start update')
+          this.update()
+        }
+      )
+
+      // console.log('[init] start update')
       this.update()
     },
     update () {
-      if (this.localExpanded) {
-        return
-      }
-      this.applyChange()
-      if (this.isOverflow() || this.isClamped) {
-        this.search()
-      }
+      if (this.localExpanded) return
+
+      const { before, text, nonTextNodes, after, ellipsis, maxLines, lineHeight } = this
+      const { offset } = measure({
+        before,
+        text,
+        nonTextNodes,
+        after,
+        ellipsis,
+        maxLines,
+        lineHeight: text ? undefined : lineHeight,
+        originEle: this.$refs.container
+      })
+      this.offset = offset
+    },
+    resizeOnNextFrame () {
+      // console.log('[resizeOnNextFrame] 开始重排')
+      raf.cancel(rafId)
+      rafId = raf(() => {
+        this.update()
+      })
     },
     expand () {
       this.localExpanded = true
@@ -124,136 +205,79 @@ export default {
     toggle () {
       this.localExpanded = !this.localExpanded
     },
-    getLines () {
-      return Object.keys(
-        Array.prototype.slice.call(this.$refs.content.getClientRects()).reduce(
-          (prev, { top, bottom }) => {
-            const key = `${top}/${bottom}`
-            if (!prev[key]) {
-              prev[key] = true
-            }
-            return prev
-          },
-          {}
-        )
-      ).length
-    },
-    isOverflow () {
-      if (!this.maxLines && !this.maxHeight) {
-        return false
-      }
-
-      if (this.maxLines) {
-        if (this.getLines() > this.maxLines) {
-          return true
-        }
-      }
-
-      if (this.maxHeight) {
-        if (this.$el.scrollHeight > this.$el.offsetHeight) {
-          return true
-        }
-      }
-      return false
-    },
     getText () {
-      // Look for the first non-empty text node
       const [content] = (this.$slots.default || []).filter(
         (node) => !node.tag && !node.isComment
       )
       return content ? content.text : ''
     },
-    moveEdge (steps) {
-      this.clampAt(this.offset + steps)
-    },
-    clampAt (offset) {
-      this.offset = offset
-      this.applyChange()
-    },
-    applyChange () {
-      this.$refs.text.textContent = this.realText
-    },
-    stepToFit () {
-      this.fill()
-      this.clamp()
-    },
-    fill () {
-      while (
-        (!this.isOverflow() || this.getLines() < 2) &&
-        this.offset < this.text.length
-      ) {
-        this.moveEdge(1)
-      }
-    },
-    clamp () {
-      while (this.isOverflow() && this.getLines() > 1 && this.offset > 0) {
-        this.moveEdge(-1)
-      }
-    },
-    search (...range) {
-      const [from = 0, to = this.offset] = range
-      if (to - from <= 3) {
-        this.stepToFit()
-        return
-      }
-      const target = Math.floor((to + from) / 2)
-      this.clampAt(target)
-      if (this.isOverflow()) {
-        this.search(from, target)
-      } else {
-        this.search(target, to)
-      }
+    getNonTextNodes () {
+      const nodes = (this.$slots.default || []).filter(
+        (node) => node.tag && !node.isComment
+      )
+      return nodes
     },
     cleanUp () {
+      if (rafId) {
+        raf.cancel(rafId)
+      }
       if (this.unregisterResizeCallback) {
         this.unregisterResizeCallback()
       }
+    },
+    /**
+     * Slots are not responsive, we have to update manually.
+     */
+    updateBeforeAndAfter () {
+      const { expand, collapse, toggle } = this
+      const scope = {
+        expand,
+        collapse,
+        toggle,
+        clamped: this.isClamped,
+        expanded: this.localExpanded
+      }
+
+      this.before = this.$scopedSlots.before
+        ? this.$scopedSlots.before(scope)
+        : this.$slots.before
+      this.after = this.$scopedSlots.after
+        ? this.$scopedSlots.after(scope)
+        : this.$slots.after
+      // console.log('[updateBeforeAndAfter] before: ', this.before)
+      // console.log('[updateBeforeAndAfter] after: ', this.after)
     }
   },
   render (h) {
+    const content = this.text ? this.text : this.nonTextNodes
+    const realContent = this.text ? this.realText : this.realNonTextNodes
     const contents = [
       h(
         'span',
         this.$isServer
           ? {}
           : {
-            ref: 'text',
             attrs: {
-              'aria-label': this.text.trim()
+              'aria-label': this.text ? this.text.trim() : ''
             }
           },
-        this.$isServer ? this.text : this.realText
+        this.$isServer ? content : realContent
       )
     ]
+    if (this.before) {
+      contents.unshift(...(Array.isArray(this.before) ? this.before : [this.before]))
+    }
+    if (this.after) {
+      contents.push(...(Array.isArray(this.after) ? this.after : [this.after]))
+    }
 
-    const { expand, collapse, toggle } = this
-    const scope = {
-      expand,
-      collapse,
-      toggle,
-      clamped: this.isClamped,
-      expanded: this.localExpanded
-    }
-    const before = this.$scopedSlots.before
-      ? this.$scopedSlots.before(scope)
-      : this.$slots.before
-    if (before) {
-      contents.unshift(...(Array.isArray(before) ? before : [before]))
-    }
-    const after = this.$scopedSlots.after
-      ? this.$scopedSlots.after(scope)
-      : this.$slots.after
-    if (after) {
-      contents.push(...(Array.isArray(after) ? after : [after]))
-    }
     const lines = [
       h(
         'span',
         {
           style: {
             boxShadow: 'transparent 0 0'
-          },
-          ref: 'content'
+          }
         },
         contents
       )
@@ -264,9 +288,10 @@ export default {
         style: {
           maxHeight: this.realMaxHeight,
           overflow: 'hidden'
-        }
+        },
+        ref: 'container'
       },
       lines
     )
   }
-}
+})

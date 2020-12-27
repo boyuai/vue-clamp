@@ -1,5 +1,5 @@
 # &lt;vue-clamp&gt;
 
-Clamping multiline text with ease.
+Clamping multiline contents with ease.
 
-See more in our [docs & demo](https://justineo.github.io/vue-clamp/demo/).
+See more in our [docs & demo](https://boyuai.github.io/vue-clamp/demo/).
