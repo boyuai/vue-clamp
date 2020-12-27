@@ -9,7 +9,7 @@
   <p>
     <a
       class="tooltip"
-      href="https://github.com/Justineo/vue-clamp"
+      href="https://github.com/boyuai/vue-clamp"
       :data-tooltip="zh ? '前往 GitHub 仓库' : 'Visit GitHub repo'"
     >GitHub →</a>
   </p>

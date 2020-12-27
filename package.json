@@ -1,7 +1,7 @@
 {
   "name": "vue-clamp",
-  "version": "0.3.1",
-  "description": "Clamping multiline text with ease.",
+  "version": "0.4.0",
+  "description": "Clamping multiline contents with ease.",
   "scripts": {
     "serve": "vue-cli-service serve",
     "build": "NODE_ENV=production rollup -c",
@@ -45,12 +45,12 @@
     "vue": "^2.5.17"
   },
   "bugs": {
-    "url": "https://github.com/Justineo/vue-clamp/issues"
+    "url": "https://github.com/boyuai/vue-clamp/issues"
   },
-  "homepage": "https://justineo.github.io/vue-clamp/demo/",
+  "homepage": "https://boyuai.github.io/vue-clamp/demo/",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Justineo/vue-clamp.git"
+    "url": "git+https://github.com/boyuai/vue-clamp.git"
   }
 }
