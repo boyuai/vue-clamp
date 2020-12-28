@@ -48,8 +48,8 @@
           class="form-label col-5 col-sm-12"
           for="width0"
         >{{ zh ? '容器宽度' : 'Container width' }}</label>
-        <div class="col-7 col-sm-12 tooltip" :data-tooltip="`${width0}px`">
-          <input id="width0" v-model="width0" class="slider" type="range" min="240" max="600">
+        <div class="col-7 col-sm-12 tooltip" :data-tooltip="`${width0}%`">
+          <input id="width0" v-model="width0" class="slider" type="range" min="50" max="100">
         </div>
       </div>
     </div>
@@ -61,7 +61,7 @@
       :line-height="40"
       autoresize
       :style="{
-        width: `${width0}px`,
+        width: `${width0}%`,
         lineHeight: '40px'
       }"
     >
@@ -102,8 +102,8 @@
           class="form-label col-5 col-sm-12"
           for="width1"
         >{{ zh ? '容器宽度' : 'Container width' }}</label>
-        <div class="col-7 col-sm-12 tooltip" :data-tooltip="`${width1}px`">
-          <input id="width1" v-model="width1" class="slider" type="range" min="240" max="600">
+        <div class="col-7 col-sm-12 tooltip" :data-tooltip="`${width1}%`">
+          <input id="width1" v-model="width1" class="slider" type="range" min="50" max="100">
         </div>
       </div>
       <div v-if="!zh" class="form-group">
@@ -132,7 +132,7 @@
       :max-lines="lines1"
       autoresize
       :style="{
-        width: `${width1}px`
+        width: `${width1}%`
       }"
     >
       {{ zh ? textZh : text }}
@@ -162,8 +162,8 @@
           class="form-label col-5 col-sm-12"
           for="width2"
         >{{ zh ? '容器宽度' : 'Container width' }}</label>
-        <div class="col-7 col-sm-12 tooltip" :data-tooltip="`${width2}px`">
-          <input id="width2" v-model="width2" class="slider" type="range" min="240" max="600">
+        <div class="col-7 col-sm-12 tooltip" :data-tooltip="`${width2}%`">
+          <input id="width2" v-model="width2" class="slider" type="range" min="50" max="100">
         </div>
       </div>
       <div v-if="!zh" class="form-group">
@@ -202,7 +202,7 @@
       autoresize
       :expanded.sync="expanded1"
       :style="{
-        width: `${width2}px`
+        width: `${width2}%`
       }"
     >
       {{ zh ? textZh : text }}
@@ -233,8 +233,8 @@
           class="form-label col-5 col-sm-12"
           for="width3"
         >{{ zh ? '容器宽度' : 'Container width' }}</label>
-        <div class="col-7 col-sm-12 tooltip" :data-tooltip="`${width3}px`">
-          <input id="width3" v-model="width3" class="slider" type="range" min="240" max="600">
+        <div class="col-7 col-sm-12 tooltip" :data-tooltip="`${width3}%`">
+          <input id="width3" v-model="width3" class="slider" type="range" min="50" max="100">
         </div>
       </div>
       <div v-if="!zh" class="form-group">
@@ -263,7 +263,7 @@
       :max-lines="lines3"
       autoresize
       :style="{
-        width: `${width3}px`
+        width: `${width3}%`
       }"
       @clampchange="clamped3 = $event"
     >{{ zh ? textZh : text }}</v-clamp>
@@ -594,18 +594,18 @@ export default {
   data () {
     return {
       lines0: 3,
-      width0: 600,
+      width0: 100,
       lines1: 3,
-      width1: 600,
+      width1: 100,
       hyphens1: true,
       rtl1: false,
       expanded1: false,
-      height: 'calc(48px + 12em)',
-      width2: 600,
+      height: 'calc(32px + 7em)',
+      width2: 100,
       hyphens2: true,
       rtl2: false,
       lines3: 5,
-      width3: 600,
+      width3: 100,
       hyphens3: true,
       rtl3: false,
       clamped3: false,
@@ -658,12 +658,12 @@ html
   scroll-behavior smooth
 
 h1
-  margin-top 2rem
+  padding-top 3rem
   align-items center
 
 #lang
   position absolute
-  top 0.6rem
+  top 1rem
   right 0
 
 h2
@@ -672,7 +672,13 @@ h2
 article
   position relative
   margin 0 auto
-  width 600px
+  width: 400px
+  @media (min-width: 320px)
+    width 300px
+  @media (min-width: 480px)
+    width 400px
+  @media screen and (min-width: 600px)
+    width 560px
 
 .divider[data-content]
   margin 2rem 0
