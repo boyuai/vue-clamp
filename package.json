@@ -1,14 +1,14 @@
 {
   "name": "@boyuai/vue-clamp",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "Clamping multiline contents with ease.",
   "scripts": {
     "serve": "vue-cli-service serve",
     "build": "NODE_ENV=production rollup -c",
     "lint": "vue-cli-service lint",
     "build:demo": "vue-cli-service build",
-    "prepublishOnly": "cp ./src/components/Clamp.js .",
-    "publish": "rm ./Clamp.js"
+    "prepublishOnly": "cp ./src/components/* .",
+    "publish": "rm ./Clamp.js ./utils.js"
   },
   "main": "dist/vue-clamp.js",
   "module": "Clamp.js",
@@ -53,5 +53,13 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/boyuai/vue-clamp.git"
-  }
+  },
+  "keywords": [
+    "clamp",
+    "ellipsis",
+    "clamp-text",
+    "truncate-text",
+    "multiline-text",
+    "vue"
+  ]
 }
