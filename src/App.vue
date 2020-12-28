@@ -295,20 +295,20 @@
     </summary>
     <p v-if="zh">
       对于使用 Vue CLI 3 创建的项目，请确保将
-      <code>vue-clamp</code> 与
+      <code>@boyuai/vue-clamp</code> 与
       <code>resize-detector</code> 加入
       <code>vue.config.js</code> 文件的
       <code>transpileDependencies</code> 选项中：
     </p>
     <p v-else>
       For projects created with Vue CLI 3, remember to add
-      <code>vue-clamp</code> and
+      <code>@boyuai/vue-clamp</code> and
       <code>resize-detector</code> into the
       <code>transpileDependencies</code> option in
       <code>vue.config.js</code>:
     </p>
     <pre class="code javascript" data-lang="JavaScript"><code>module.exports = {
-  transpileDependencies: ['vue-clamp', 'resize-detector']
+  transpileDependencies: ['@boyuai/vue-clamp', 'resize-detector']
 }
 </code></pre>
   </details>
@@ -336,7 +336,7 @@
 +       include: [
 +         resolve('src'),
 +         resolve('test'),
-+         resolve('node_modules/vue-clamp'),
++         resolve('node_modules/@boyuai/vue-clamp'),
 +         resolve('node_modules/resize-detector')
 +       ]
       }
@@ -351,21 +351,21 @@
     </summary>
     <p v-if="zh">
       在 Nuxt.js 中使用时，请确保将
-      <code>vue-clamp</code> 与
+      <code>@boyuai/vue-clamp</code> 与
       <code>resize-detector</code> 加入
       <code>nuxt.config.js</code> 文件的
       <code>build.transpile</code> 选项中：
     </p>
     <p v-else>
       When using in Nuxt.js, remember to add
-      <code>vue-clamp</code> and
+      <code>@boyuai/vue-clamp</code> and
       <code>resize-detector</code> into the
       <code>build.transpile</code> option in
       <code>nuxt.config.js</code>:
     </p>
     <pre class="code javascript" data-lang="JavaScript"><code>module.exports = {
   build: {
-    transpile: ['vue-clamp', 'resize-detector']
+    transpile: ['@boyuai/vue-clamp', 'resize-detector']
   }
 }
 </code></pre>
@@ -376,7 +376,7 @@
 &lt;/template&gt;
 
 &lt;script&gt;
-import VClamp from 'vue-clamp'
+import VClamp from '@boyuai/vue-clamp'
 
 export default {
   components: {
