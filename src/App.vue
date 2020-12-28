@@ -672,13 +672,15 @@ h2
 article
   position relative
   margin 0 auto
-  width: 400px
+  width 560px
   @media (min-width: 320px)
-    width 300px
+    width 290px
+  @media (min-width: 400px)
+    width 370px
   @media (min-width: 480px)
-    width 400px
+    width 450px
   @media screen and (min-width: 600px)
-    width 560px
+    width 580px
 
 .divider[data-content]
   margin 2rem 0
